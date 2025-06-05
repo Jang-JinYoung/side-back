@@ -1,0 +1,41 @@
+{
+    "name": "graphql-typescript",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "dev": "ts-node src/index.ts",
+        "build": "tsc",
+        "start": "node dist/index.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "description": "",
+    "dependencies": {
+        "body-parser": "^2.2.0",
+        "cors": "^2.8.5",
+        "express": "^5.1.0",
+        "graphql": "^16.10.0",
+        "js-yaml": "^4.1.0",
+        "jsonwebtoken": "^9.0.2",
+        "mysql2": "^3.14.0",
+        "redis": "^4.7.0",
+        "reflect-metadata": "^0.2.2",
+        "request": "^2.88.2",
+        "typeorm": "^0.3.22",
+        "typeorm-encrypted": "^0.8.0"
+    },
+    "devDependencies": {
+        "@babel/cli": "^7.27.1",
+        "@babel/core": "^7.27.1",
+        "@babel/preset-env": "^7.27.1",
+        "@types/cors": "^2.8.17",
+        "@types/express": "^5.0.1",
+        "@types/js-yaml": "^4.0.9",
+        "@types/jsonwebtoken": "^9.0.9",
+        "@types/request": "^2.48.12",
+        "tsconfig-paths": "^4.2.0",
+        "typescript": "^5.8.3"
+    }
+}
