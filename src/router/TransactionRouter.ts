@@ -3,9 +3,17 @@ import express, { Request, Response } from 'express';
 import { AppDataSource } from '../config/DBconfig';
 import { RecordTransaction } from '../models';
 import authMiddleware from "./AuthMiddleWare";
+import request from 'request';
 
 const router = express.Router();
 const recordTransactionRepository = AppDataSource.getRepository(RecordTransaction);
+
+interface IResponse extends Request {
+    userInfo?: {
+        userId: number;
+        name: string;
+      };
+}
 
 
 const getBetweenDate = (year:number, month: number) => {
@@ -20,9 +28,11 @@ const getBetweenDate = (year:number, month: number) => {
 /**
  * 목록 조회
  */
-router.get('/', authMiddleware, async (req: Request, res: Response) => {
+router.get('/', authMiddleware, async (req: IResponse, res: Response) => {
     try {
 
+
+        const userId = req.userInfo?.userId;
         const year = req.query.year ?? new Date().getFullYear();
         const month = req.query.month ?? new Date().getMonth()+1;
 
@@ -57,6 +67,7 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
             .where('A.useYn = :useYn', { useYn: 1 })
             .andWhere('A.delYn = :delYn', { delYn: 0 })
             .andWhere('A.transactionDate >= :startDate AND A.transactionDate < :endDate', { startDate, endDate })
+            .andWhere('A.userId = :userId', { userId })
             .orderBy('A.transactionDate')
             .getRawMany();
 
