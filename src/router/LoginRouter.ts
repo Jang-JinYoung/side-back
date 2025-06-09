@@ -5,10 +5,31 @@ import { User } from "../models";
 import { AppDataSource } from "../config/DBconfig";
 import { redisClient } from "../config/redisConfig";
 
+import fs from "fs";
+import path from "path";
+import yaml from "js-yaml";
+
 const router = express.Router();
 
 const KAKAO_CODE = "10003002";
 const NAVER_CODE = "10003003";
+
+interface IKey {
+    sns: {
+        naver: string;
+    }
+}
+
+const configPath = path.join(
+    process.cwd(),
+    "node_modules",
+    "my-config-repo",
+    "key.yaml"
+);
+
+const config = yaml.load(fs.readFileSync(configPath, "utf8")) as IKey;
+
+
 
 /*
 todo 
@@ -124,7 +145,7 @@ const kakaoLogin = async (code: string) => {
 const naverLogin = async (code: string) => {
     const getToken = (): Promise<ApiResponse> => {
         const client_id = "h9rA5YtXEZYFtXZ1pKKe";
-        const client_secret = "l0ajWRPLGk";
+        const client_secret = config.sns.naver;
         const redirect_uri = encodeURI("http://localhost:3000/callback/naver");
         const api_url = `https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id=${client_id}&client_secret=${client_secret}&redirect_uri=${redirect_uri}&code=${code}`;
 
