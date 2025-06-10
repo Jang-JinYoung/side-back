@@ -35,8 +35,6 @@ const authMiddleware: RequestHandler = async (
     // 1.5 userInfo에 redis정보 저장
     (req as any).userInfo = JSON.parse(result);
 
-    console.log(result);
-
     next();
 };
 
