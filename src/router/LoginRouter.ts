@@ -107,21 +107,27 @@ const kakaoLogin = async (code: string) => {
         return new Promise<{
             code: number;
             message: string;
-            nickname?: string;
-            email?: string;
+            nickname: string;
+            email: string;  
+        } | {
+            code: number;
+            message: string;
         }>((resolve, reject) => {
             request(userInfoOptions, (error, response, body) => {
                 const result = JSON.parse(body);
                 if (!error && response.statusCode === 200) {
                     if (result.kakao_account) {
+
                         const nickname = result.kakao_account.profile.nickname;
                         const email = result.kakao_account.email;
+
                         resolve({
                             code: 200,
                             message: "SUCCESS",
                             nickname,
                             email,
                         });
+
                     } else {
                         resolve({ code: 500, message: "NOT_USER_INFO" });
                     }
@@ -135,11 +141,16 @@ const kakaoLogin = async (code: string) => {
 
     const tokenData = await getToken();
     if (tokenData.code === 200 && tokenData.access_token) {
-        const userData = await getUserInfo(tokenData.access_token);
+        const userData = await getUserInfo(tokenData.access_token) as {
+            code: number;
+            message: string;
+            nickname: string;
+            email: string;
+        };
         return userData;
-    } else {
-        return tokenData;
     }
+
+    return tokenData as any;
 };
 
 const naverLogin = async (code: string) => {
@@ -197,8 +208,11 @@ const naverLogin = async (code: string) => {
         return new Promise<{
             code: number;
             message: string;
-            email?: string;
-            name?: string;
+        } | {
+            code: number;
+            message: string;
+            email: string;
+            name: string;
         }>((resolve, reject) => {
             request(options, (error, response, body) => {
                 if (!error && response.statusCode === 200) {
@@ -235,7 +249,12 @@ const naverLogin = async (code: string) => {
 
     const tokenData = await getToken();
     if (tokenData.code === 200 && tokenData.access_token) {
-        return await getUserInfo(tokenData.access_token);
+        return await getUserInfo(tokenData.access_token) as {
+            code: number;
+            message: string;
+            email: string;
+            name: string;
+        };
     } else {
         return tokenData;
     }
@@ -295,8 +314,52 @@ router.get("/callback", async (req: Request, res: Response) => {
         const { code, sns } = req.query;
 
         if (typeof code === "string") {
+            // 카카오 로그인
             if (sns === "kakao") {
+
                 const result = await kakaoLogin(code);
+                
+                if (result.email && result.nickname) {
+                    // 유저정보 확인
+                    let user = await userRepository.findOneBy({
+                        useYn: 1,
+                        delYn: 0,
+                        email: result.email,
+                        signUpCode: KAKAO_CODE,
+                    });
+                    
+                    // 유저정보가 없으면 회원가입
+                    if (!user) {
+                        console.log("KAKAO 회원가입");
+                        user = await signUp({
+                            email: result.email,
+                            name: result.nickname,
+                            signUpCode: KAKAO_CODE,
+                        });
+                    }
+
+                    // 회원 가입
+                    try {
+                        const signInResult = await signIn(user);
+                        if (signInResult) {
+                            res.status(200).json({
+                                code: 200,
+                                message: "SUCCESS",
+                                data: {
+                                    accessToken: signInResult,
+                                },
+                            });
+                        } else {
+                            res.status(200).json({
+                                code: 500,
+                                message: "로그인 에러(토큰 발급 오류)",
+                                data: null,
+                            });
+                        }
+                    } catch (error) {
+                        console.error("Error inserting transaction:", error);
+                    }
+                }
                 res.status(200).json(result);
             } else if (sns === "naver") {
                 // 네이버 로그인 -> 개인정보 가져옴
@@ -308,6 +371,7 @@ router.get("/callback", async (req: Request, res: Response) => {
                         useYn: 1,
                         delYn: 0,
                         email: result.email,
+                        signUpCode: NAVER_CODE,
                     });
 
                     // 유저정보가 없으면 회원가입
