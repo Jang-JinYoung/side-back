@@ -8,11 +8,11 @@ import request from 'request';
 const router = express.Router();
 const recordTransactionRepository = AppDataSource.getRepository(RecordTransaction);
 
-interface IResponse extends Request {
+interface IRequest extends Request {
     userInfo?: {
-        userId: number;
+        userId: string;
         name: string;
-      };
+    };
 }
 
 
@@ -28,7 +28,7 @@ const getBetweenDate = (year:number, month: number) => {
 /**
  * 목록 조회
  */
-router.get('/', authMiddleware, async (req: IResponse, res: Response) => {
+router.get('/', authMiddleware, async (req: IRequest, res: Response) => {
     try {
 
 
@@ -89,9 +89,10 @@ router.get('/', authMiddleware, async (req: IResponse, res: Response) => {
 /**
  * 입금/지출/잔액 통계
  */
-router.get('/statistics', async (req: Request, res: Response) => {
+router.get('/statistics', authMiddleware, async (req: IRequest, res: Response) => {
     try {
 
+        const userId = req.userInfo?.userId;
         const year = req.query.year ?? new Date().getFullYear();
         const month = req.query.month ?? new Date().getMonth()+1;
 
@@ -106,10 +107,11 @@ router.get('/statistics', async (req: Request, res: Response) => {
               { transactionCode, useYn: 1, delYn: 0 }
             )
             .andWhere('transactionDate >= :startDate AND transactionDate < :endDate', { startDate, endDate })
+            .andWhere('userId = :userId ', { userId })
             .getRawOne();
         }
         const { income } = await getResult("10000001", "income");
-        const {expense} = await getResult("10000002", "expense");
+        const { expense } = await getResult("10000002", "expense");
 
         res.status(200).json({ income: Number(income), expense: Number(expense), balance: income-expense });
     } catch (error) {
@@ -141,9 +143,10 @@ router.get('/:transactionId', async (req: Request, res: Response) => {
 /**
  * 등록
  */
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', authMiddleware, async (req: IRequest, res: Response) => {
     try {
 
+        const userId = req.userInfo?.userId;
         const newTransaction = new RecordTransaction();
 
         newTransaction.transactionDate = req.body.transactionDate;
@@ -151,7 +154,7 @@ router.post('/', async (req: Request, res: Response) => {
         newTransaction.amount = req.body.amount;
         newTransaction.categoryCode = req.body.categoryCode;
         newTransaction.description = req.body.description;
-        newTransaction.userId = "user123";
+        newTransaction.userId = userId as string;
 
         const result = await recordTransactionRepository.save(newTransaction);
 
