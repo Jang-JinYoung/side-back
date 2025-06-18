@@ -5,6 +5,7 @@ import { connectDB, corsOptions, redisClient } from "./config";
 import commontCodeRouter from "./router/CommonCodeRouter";
 import transactionRouter from "./router/TransactionRouter";
 import loginRouter from "./router/LoginRouter";
+import paymentRouter from "./router/PaymentRouter";
 import bodyParser from "body-parser";
 
 // Express 애플리케이션 초기화
@@ -17,6 +18,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use("/transaction", transactionRouter);
 app.use("/code", commontCodeRouter);
 app.use("/login", loginRouter);
+app.use("/payment", paymentRouter);
 
 export interface IResponse {
   code: number; //
